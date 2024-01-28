@@ -1,6 +1,13 @@
 #include <stdio.h>
 
+void login_menu();
+
 int main()
 {
-    printf("hello git!\n");
+    login_menu();
+}
+
+void login_menu()
+{
+    
 }
