@@ -40,7 +40,7 @@ struct object
 };
 typedef struct object object;
 // hardship : s -> soft  h -> hard
-//type : s -> spaceship   w -> wall  m -> mirror   b -> black hole   h -> heart
+//type : s -> spaceship   w -> wall  m -> mirror   b -> black hole   h -> heart   t -> teleporter
 
 object obj[XMAX + 1][YMAX + 1];
 
@@ -55,12 +55,19 @@ void set_obj();
 void makeItWall(int x,int y);
 void makeItBlackHole();
 void makeItHeart(int x, int y);
-
+void makeItTeleporter(int x , int y);
 
 int main()
 {
     set_obj();
     print_map1();
+}
+void makeItTeleporter(int x , int y)
+{
+    gotoxy(x,y);
+    obj[x][y].hardship = 's';
+    obj[x][y].type = 't';
+    printf(YELLOW"\u2742"RESET);
 }
 void makeItGodMirror(int x,int y)
 {
@@ -290,6 +297,11 @@ void print_map1()
     makeItGodMirror(89,15);
 
     makeItHeart(55,5);
+    makeItBlackHole(85,4);
+
+    makeItTeleporter(99,20);
+    makeItTeleporter(11,20);
+
 
     gotoxy(XMAX,YMAX);
     printf("\n");
