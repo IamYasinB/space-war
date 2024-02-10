@@ -20,8 +20,25 @@
 #define ORANGE "\x1b[38;2;255;165;0m"
 #define PINK "\x1b[38;2;255;100;190m"
 
-#define XMAX 110
-#define YMAX 24
+
+
+
+#define MYXMAX 110
+#define MYYMAX 24
+
+struct spaceship 
+{
+    int curx;
+    int cury;
+
+    int perx;
+    int pery;
+
+    char color; /*red(r) or blue(b)*/
+};
+typedef struct spaceship spaceship;
+spaceship sp1 = {0,0,0,0,'r'};
+spaceship sp2 = {0,0,0,0,'b'};
 
 struct person
 {
@@ -42,26 +59,37 @@ typedef struct object object;
 // hardship : s -> soft  h -> hard
 //type : s -> spaceship   w -> wall  m -> mirror   b -> black hole   h -> heart   t -> teleporter
 
-object obj[XMAX + 1][YMAX + 1];
-
+object obj[MYXMAX + 1][MYYMAX + 1];
 
 void login_menu();
 void sign_up();
 void sign_in();
 void gotoxy(int x,int y);
-void play_game();
+void play_game(int numerOfMap);
 void print_map1();
 void set_obj();
 void makeItWall(int x,int y);
 void makeItBlackHole();
 void makeItHeart(int x, int y);
 void makeItTeleporter(int x , int y);
+void move_sp(char move);
+void move_char(int x,int y,char move,char obje,char number);
+
 
 int main()
 {
+    printf("\e[?25l");
+    
+    
+    
     set_obj();
-    print_map1();
+    play_game(1);
+
+
+
+    printf("\e[?25h");
 }
+
 void makeItTeleporter(int x , int y)
 {
     gotoxy(x,y);
@@ -99,9 +127,9 @@ void makeItHeart(int x, int y)
 }
 void set_obj()
 {
-    for (int i = 1; i < XMAX; i++)
+    for (int i = 1; i < MYXMAX; i++)
     {
-        for (int j = 0; j < YMAX; j++)
+        for (int j = 0; j < MYYMAX; j++)
         {
             obj[i][j].x = i;
             obj[i][j].y = j;
@@ -192,39 +220,184 @@ void gotoxy(int x,int y)
   printf("%c[%d;%df",0x1B,y,x);
 }
 
-void play_game()
+void play_game(int numerOfMap)
 {
-    //printf("\e[?25l"); /*hide cursor*/
-    gotoxy(10,10);
-    printf("this is 10 10");
-    gotoxy(5,5);
-    printf("this is 5 5 ");
-    char a = getch();
+    if (numerOfMap == 1)
+    {
+        print_map1();
+        
+        /*setup spaceshipe 1*/
+        sp1.curx = 12;
+        sp1.cury = 11;
+        sp1.perx = 12;
+        sp1.pery = 11;
+        sp1.color = 'b';
+        gotoxy(12,11);
+        printf(BLUE"\u25A3"RESET);
 
+        /*setup spaceshipe 2*/
+        sp2.curx = 98;
+        sp2.cury = 11;
+        sp2.perx = 98;
+        sp2.pery = 11;
+        sp2.color = 'r';
+        gotoxy(98,11);
+        printf(RED"\u25A3"RESET);
+
+        char input = 'a';
+        while ((input = getch()) != 'q')
+        {
+            move_sp(input);
+        }
+    }
+    
+}
+void swap_obj(int x1, int y1, int x2, int y2)
+{
+    object temp = {obj[x1][y1].x,obj[x1][y1].y,obj[x1][y1].hardship,obj[x1][y1].type};
+
+    obj[x1][y1].x = obj[x2][y2].x;
+    obj[x1][y1].y = obj[x2][y2].y;
+    obj[x1][y1].hardship = obj[x2][y2].hardship;
+    obj[x1][y1].type = obj[x2][y2].type;
+
+    obj[x2][y2].x = temp.x;
+    obj[x2][y2].y = temp.y;
+    obj[x2][y2].hardship = temp.hardship;
+    obj[x2][y2].type = temp.type;
+}
+void move_char(int x,int y,char move,char obje,char number)
+{
+    switch (move)
+    {
+    case 'u':
+        {
+            gotoxy(x+1,y);
+            printf("\b \b");
+            gotoxy(x , y -1);
+            switch (obje)
+            {
+            case 's':
+                {
+                    if (number == 1)
+                    {
+                        printf(BLUE);
+                    }else if (number == 2)
+                    {
+                        printf(RED);
+                    }
+                    printf("\u25A3"RESET);
+                    break;
+                }
+            
+            case 'b' :
+            {
+                /*codes to move bullets*/
+                break;
+            }
+            }
+            break;
+        }
+    case 'd':
+        {
+            
+            break;
+        }
+    case 'l':
+        {
+            
+            break;
+        }
+    case 'r':
+        {
+            
+            break;
+        }
+    }
+}
+void move_sp(char move)
+{
+    switch (move)
+        {
+        case 'w':
+            {
+                sp1.pery = sp1.cury;
+                sp1.cury -= 1;
+                move_char(sp1.perx,sp1.pery,'u','s','1');
+                if(obj[sp1.curx][sp1.cury - 1].hardship == 's')
+                {
+                    if (obj[sp1.curx][sp1.cury - 1].type == 'n')
+                    {
+                        sp1.pery = sp1.cury;
+                        sp1.cury -= 1;
+                        move_char(sp1.perx,sp1.pery,'u','s','1');
+                        
+                    }
+                    
+                }
+                break;
+            }
+        case 'a':
+            {
+
+                break;
+            }                
+        case 's':
+            {
+
+                break;
+            }
+        case 'd':
+            {
+                break;
+            }
+           
+        case 'i':
+        {
+
+            break;
+        }
+        case 'k':
+        {
+
+            break;
+        }                
+        case 'l':
+            {
+
+                break;
+            }
+        case 'j':
+            {
+
+                break;
+            }              
+
+        }
 }
 void print_map1()
 {    
     system("clear");
     /*printing up and down walls ... */
-    for (int i = 0; i < XMAX; i += 1)
+    for (int i = 0; i < MYXMAX; i += 1)
     {
         makeItWall(i,0);
     }
-    for (int i = 0; i < XMAX; i += 1)
+    for (int i = 0; i < MYXMAX; i += 1)
     {
-        makeItWall(i,XMAX);
+        makeItWall(i,MYXMAX);
     }
 
     
     /*printing side walls*/
 
-    for (int j = 0; j < YMAX; j++)
+    for (int j = 0; j < MYYMAX; j++)
     {
         makeItWall(0,j);
     }  
-    for (int j = 0; j < YMAX; j++)
+    for (int j = 0; j < MYYMAX; j++)
     {
-        makeItWall(XMAX,j);
+        makeItWall(MYXMAX,j);
     }  
 
     /*printing iner walls*/
@@ -303,10 +476,7 @@ void print_map1()
     makeItTeleporter(11,20);
 
 
-    gotoxy(XMAX,YMAX);
-    printf("\n");
-    printf("\n");
-    printf("\n");
+
 
 
 }
