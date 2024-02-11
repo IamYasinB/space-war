@@ -4,6 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
+#include <unistd.h>
 #include "getch.h"
 
 //printf("\e[?25l"); -> hide cursor
@@ -22,10 +24,19 @@
 #define PINK "\x1b[38;2;255;100;190m"
 
 
-
-
 #define MYXMAX 110
 #define MYYMAX 24
+
+struct bullet
+{
+    char direction; /*u : up    d : down    l : left    r : right   n : nothing*/
+    int x;
+    int y;
+};
+typedef struct bullet bullet;
+
+bullet b1 = {'n' , -1 , -1};
+bullet b2 = {'n' , -1 , -1};
 
 struct spaceship 
 {
@@ -34,12 +45,10 @@ struct spaceship
 
     int perx;
     int pery;
-
-    char color; /*red(r) or blue(b)*/
 };
 typedef struct spaceship spaceship;
-spaceship sp1 = {0,0,0,0,'r'};
-spaceship sp2 = {0,0,0,0,'b'};
+spaceship sp1 = {0,0,0,0};
+spaceship sp2 = {0,0,0,0};
 
 struct person
 {
@@ -75,15 +84,41 @@ void makeItBlackHole();
 void makeItHeart(int x, int y);
 void makeItTeleporter(int x , int y);
 void move_sp(char move);
+void set_bul1();
+void set_bul2();
+int is_valid_email(char *str);
+void* move_bul1();
+void* move_bul2();
 
+pthread_mutex_t mutex1;
+pthread_mutex_t mutex2;
 
 int main()
 {
-    //printf("\e[?25l");
-    print_map1();
-    set_obj();
-    play_game(1);
-    //printf("\e[?25h");
+    // pthread_mutex_init(&mutex1, NULL);
+    // pthread_mutex_init(&mutex2, NULL);
+
+    // pthread_t move_bullet1;
+    // pthread_t move_bullet2;
+
+    // pthread_create(&move_bullet1, NULL, move_bul1, NULL);
+    // pthread_create(&move_bullet2, NULL, move_bul2, NULL);
+
+    // printf("\e[?25l");
+    // print_map1();
+    // set_obj();
+    // play_game(1);
+
+
+    // printf("\e[?25h");
+
+    // pthread_join(move_bullet1, NULL);
+    // pthread_join(move_bullet2, NULL);
+
+    // pthread_mutex_destroy(&mutex1);
+    // pthread_mutex_destroy(&mutex2);
+    login_menu();
+
 }
 
 void makeItTeleporter(int x , int y)
@@ -135,80 +170,7 @@ void set_obj()
     }
 }
 
-void login_menu()
-{
-    printf(GREEN "wellcome to space war\n" RESET);
-    printf("here you can :\n");
-    printf("\t"RED"[1]"RESET"Sign up\n");
-    printf("\t"RED"[2]"RESET"Sign in\n");
-    printf("\t"RED"[3]"RESET"Exit\n");
 
-    char usin = 'a';
-    do
-    {
-        usin = getch();
-    } while (!(usin == '1' || usin == '2' || usin == '3'));
-
-    switch (usin)
-    {
-    case '1':
-        {
-            sign_up();
-            break;
-        }
-    
-    case '2':
-        {
-            sign_in();
-            break;
-        }
-
-    case '3' :
-        {
-            return;
-        }    
-    }
-}
-void sign_up()
-{
-    FILE* file = fopen("accounts.bin","wb+");
-    if (file == NULL)
-    {
-        printf(RED "could NOT open file\n"RESET);
-        exit(-1);
-    }
-    system("clear");
-    person tempP ;
-    printf(GREEN"Sign up ... \n"RESET);
-
-    printf("please enter your user name ");
-    printf(RED"max 20 character "RESET);
-    scanf("%s",tempP.userName);
-
-    printf("please enter your email ");
-    printf(RED"max 20 character "RESET);
-    scanf("%s",tempP.email);
-
-    printf("please enter your password ");
-    printf(RED"max 20 character "RESET);
-    scanf("%s",tempP.password);
-
-    fwrite(&tempP, sizeof(struct person), 1, file);
-    
-}
-int is_valid_email(char *str) {
-    if (strstr(str, "@") == NULL)
-        return 0; 
-    if (strstr(str, ".") == NULL)
-        return 0; 
-    if (strlen(str) > 20)
-        return 0; 
-    return 1;
-}
-void sign_in()
-{
-
-}
 void gotoxy(int x,int y)
 {
     x++;
@@ -227,7 +189,6 @@ void play_game(int numerOfMap)
         sp1.cury = 11;
         sp1.perx = 12;
         sp1.pery = 11;
-        sp1.color = 'b';
         gotoxy(12,11);
         printf(BLUE"\u25A3"RESET);
 
@@ -236,21 +197,202 @@ void play_game(int numerOfMap)
         sp2.cury = 11;
         sp2.perx = 98;
         sp2.pery = 11;
-        sp2.color = 'r';
         gotoxy(98,11);
         printf(RED"\u25A3"RESET);
+        
+        
 
         char input = getch();
-        
         while (input != 'q')
         {
-
-            move_sp(input);
+            if(input == 'w' || input == 'a' || input == 's' || input == 'd' || input == 'i' || input == 'l' || input == 'k' || input == 'j')
+            {
+                move_sp(input);
+            }
+            else if (input == 'c' && b1.direction == 'n')
+            {
+                set_bul1();
+            }
+            else if(input == 'n' && b2.direction == 'n')
+            {
+                set_bul2();
+            }
             input = getch();
         }
+        
     }
     
 }
+void set_bul1()
+{
+    int deltax;
+    int deltay;    
+    b1.x = sp1.curx;
+    b1.y = sp1.cury;
+    deltax = sp1.curx - sp1.perx;
+    deltay = sp1.cury - sp1.pery;
+    if (deltax == 1)
+    {
+        b1.direction = 'r';
+        b1.x++;
+    }
+    else if (deltax == -1)
+    {
+        b1.direction = 'l';
+        b1.x--;
+    }
+    else if (deltay == 1)
+    {
+        b1.direction = 'd';
+        b1.y++;
+    }
+    else if (deltay == -1)
+    {
+        b1.direction = 'u';
+        b1.y--;
+    }
+}
+void set_bul2()
+{
+    int deltax;
+    int deltay;    
+    b2.x = sp2.curx;
+    b2.y = sp2.cury;
+    deltax = sp2.curx - sp2.perx;
+    deltay = sp2.cury - sp2.pery;
+    if (deltax == 1)
+    {
+        b2.direction = 'r';
+        b2.x++;
+    }
+    else if (deltax == -1)
+    {
+        b2.direction = 'l';
+        b2.x--;    
+    }
+    else if (deltay == 1)
+    {
+        b2.direction = 'd';
+        b2.y++;        
+    }
+    else if (deltay == -1)
+    {
+        b2.direction = 'u';
+        b2.y--;
+    }
+}
+void* move_bul1()
+{
+    
+    while(1)
+    {   
+        pthread_mutex_lock(&mutex1); // Lock the mutex
+        if(b1.direction == 'u')
+        {
+            
+            while (1)
+            {
+                gotoxy(b1.x ,b1.y);
+                printf(BLUE"\u2022"RESET);
+                fflush(stdout);
+                usleep(100000);
+                gotoxy(b1.x + 1, b1.y);
+                printf("\b ");
+                fflush(stdout);
+                b1.y -= 1;
+                if (obj[b1.x][b1.y].hardship == 'h')
+                {
+                    b1.direction = 'n';
+                    break;
+                }
+                
+            }
+            b1.direction = 'n';
+            
+        }
+        else if(b1.direction == 'd')
+        {
+            while (1)
+            {
+                gotoxy(b1.x ,b1.y);
+                printf(BLUE"\u2022"RESET);
+                fflush(stdout);
+                usleep(100000);
+                gotoxy(b1.x + 1, b1.y);
+                printf("\b ");
+                fflush(stdout);
+                b1.y += 1;
+                if (obj[b1.x][b1.y].hardship == 'h')
+                {
+                    b1.direction = 'n';
+                    break;
+                }
+                
+            }
+            b1.direction = 'n';
+        }
+        else if(b1.direction == 'l')
+        {
+            while (1)
+            {
+                gotoxy(b1.x ,b1.y);
+                printf(BLUE"\u2022"RESET);
+                fflush(stdout);
+                usleep(100000);
+                gotoxy(b1.x + 1, b1.y);
+                printf("\b ");
+                fflush(stdout);
+                b1.x -= 1;
+                if (obj[b1.x][b1.y].hardship == 'h')
+                {
+                    b1.direction = 'n';
+                    break;
+                }
+                
+            }
+            b1.direction = 'n';
+        }
+        else if(b1.direction == 'r')
+        {
+            while (1)
+            {
+                gotoxy(b1.x ,b1.y);
+                printf(BLUE"\u2022"RESET);
+                fflush(stdout);
+                usleep(100000);
+                gotoxy(b1.x + 1, b1.y);
+                printf("\b ");
+                fflush(stdout);
+                b1.x += 1;
+                if (obj[b1.x][b1.y].hardship == 'h')
+                {
+                    b1.direction = 'n';
+                    break;
+                }
+                
+            }
+            b1.direction = 'n';
+        }
+        pthread_mutex_unlock(&mutex1);
+    }
+    
+    return NULL;
+}
+
+void* move_bul2()
+{
+    while(1)
+    {   
+        pthread_mutex_lock(&mutex2); // Lock the mutex
+
+        // Perform operations for move_bul2()
+
+        pthread_mutex_unlock(&mutex2); // Unlock the mutex
+    }
+    return NULL;
+
+}
+
 void move_sp(char move)
 {
     if (move == 'w')
@@ -482,3 +624,84 @@ void print_map1()
     makeItTeleporter(11,20);
 }
 
+void login_menu()
+{
+    printf(GREEN "wellcome to space war\n" RESET);
+    printf("here you can :\n");
+    printf("\t"RED"[1]"RESET"Sign up\n");
+    printf("\t"RED"[2]"RESET"Sign in\n");
+    printf("\t"RED"[3]"RESET"Exit\n");
+
+    char usin = 'a';
+    do
+    {
+        usin = getch();
+    } while (!(usin == '1' || usin == '2' || usin == '3'));
+
+    switch (usin)
+    {
+    case '1':
+        {
+            sign_up();
+            break;
+        }
+    
+    case '2':
+        {
+            sign_in();
+            break;
+        }
+
+    case '3' :
+        {
+            return;
+        }    
+    }
+}
+void sign_up()
+{
+    FILE* file = fopen("accounts.bin","wb+");
+    if (file == NULL)
+    {
+        printf(RED "could NOT open file\n"RESET);
+        exit(-1);
+    }
+    system("clear");
+    //person tempP ;
+    person* tmpPtr = (person*)malloc(sizeof(person)); 
+    printf(GREEN"Sign up ... \n"RESET);
+
+    printf("please enter your user name ");
+    printf(RED"max 20 character "RESET);
+    scanf("%s",tmpPtr->userName);
+
+    do
+    {
+        printf("please enter your email ");
+        printf(RED"max 20 character MUST INCLUDE @ and ."RESET);
+        scanf("%s",tmpPtr->email);
+    } while (!(is_valid_email(tmpPtr->email)));
+
+    printf("please enter your password ");
+    printf(RED"max 20 character "RESET);
+    scanf("%s",tmpPtr->password);
+
+    fwrite(tmpPtr->userName, sizeof(char), strlen(tmpPtr->userName), file);
+    fwrite(tmpPtr->email, sizeof(char), strlen(tmpPtr->email), file);
+    fwrite(tmpPtr->password, sizeof(char), strlen(tmpPtr->password), file);
+    fclose(file);
+    
+}
+int is_valid_email(char *str) {
+    if (strstr(str, "@") == NULL)
+        return 0; 
+    if (strstr(str, ".") == NULL)
+        return 0; 
+    if (strlen(str) > 20)
+        return 0; 
+    return 1;
+}
+void sign_in()
+{
+
+}
