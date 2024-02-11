@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "getch.h"
 
 //printf("\e[?25l"); -> hide cursor
@@ -50,10 +51,11 @@ typedef struct person person;
 
 struct object
 {
-    int x;
-    int y;
     char hardship;
     char type;
+    int x;
+    int y;
+
 };
 typedef struct object object;
 // hardship : s -> soft  h -> hard
@@ -73,21 +75,15 @@ void makeItBlackHole();
 void makeItHeart(int x, int y);
 void makeItTeleporter(int x , int y);
 void move_sp(char move);
-void move_char(int x,int y,char move,char obje,char number);
 
 
 int main()
 {
-    printf("\e[?25l");
-    
-    
-    
+    //printf("\e[?25l");
+    print_map1();
     set_obj();
     play_game(1);
-
-
-
-    printf("\e[?25h");
+    //printf("\e[?25h");
 }
 
 void makeItTeleporter(int x , int y)
@@ -127,9 +123,9 @@ void makeItHeart(int x, int y)
 }
 void set_obj()
 {
-    for (int i = 1; i < MYXMAX; i++)
+    for (int i = 0; i <= MYXMAX; i++)
     {
-        for (int j = 0; j < MYYMAX; j++)
+        for (int j = 0; j <= MYYMAX; j++)
         {
             obj[i][j].x = i;
             obj[i][j].y = j;
@@ -244,136 +240,146 @@ void play_game(int numerOfMap)
         gotoxy(98,11);
         printf(RED"\u25A3"RESET);
 
-        char input = 'a';
-        while ((input = getch()) != 'q')
+        char input = getch();
+        
+        while (input != 'q')
         {
+
             move_sp(input);
+            input = getch();
         }
     }
     
 }
-void swap_obj(int x1, int y1, int x2, int y2)
-{
-    object temp = {obj[x1][y1].x,obj[x1][y1].y,obj[x1][y1].hardship,obj[x1][y1].type};
-
-    obj[x1][y1].x = obj[x2][y2].x;
-    obj[x1][y1].y = obj[x2][y2].y;
-    obj[x1][y1].hardship = obj[x2][y2].hardship;
-    obj[x1][y1].type = obj[x2][y2].type;
-
-    obj[x2][y2].x = temp.x;
-    obj[x2][y2].y = temp.y;
-    obj[x2][y2].hardship = temp.hardship;
-    obj[x2][y2].type = temp.type;
-}
-void move_char(int x,int y,char move,char obje,char number)
-{
-    switch (move)
-    {
-    case 'u':
-        {
-            gotoxy(x+1,y);
-            printf("\b \b");
-            gotoxy(x , y -1);
-            switch (obje)
-            {
-            case 's':
-                {
-                    if (number == 1)
-                    {
-                        printf(BLUE);
-                    }else if (number == 2)
-                    {
-                        printf(RED);
-                    }
-                    printf("\u25A3"RESET);
-                    break;
-                }
-            
-            case 'b' :
-            {
-                /*codes to move bullets*/
-                break;
-            }
-            }
-            break;
-        }
-    case 'd':
-        {
-            
-            break;
-        }
-    case 'l':
-        {
-            
-            break;
-        }
-    case 'r':
-        {
-            
-            break;
-        }
-    }
-}
 void move_sp(char move)
 {
-    switch (move)
-        {
-        case 'w':
-            {
-                sp1.pery = sp1.cury;
-                sp1.cury -= 1;
-                move_char(sp1.perx,sp1.pery,'u','s','1');
-                if(obj[sp1.curx][sp1.cury - 1].hardship == 's')
-                {
-                    if (obj[sp1.curx][sp1.cury - 1].type == 'n')
-                    {
-                        sp1.pery = sp1.cury;
-                        sp1.cury -= 1;
-                        move_char(sp1.perx,sp1.pery,'u','s','1');
-                        
-                    }
-                    
-                }
-                break;
-            }
-        case 'a':
-            {
+    if (move == 'w')
+    {
+        // printf("%d new %d\n",sp1.curx,sp1.cury);
+        // printf("%d %d\n",obj[sp1.curx][sp1.cury - 1].x,obj[sp1.curx][sp1.cury - 1].y);
+        // printf("%c\n",obj[12][10].type);
 
-                break;
-            }                
-        case 's':
-            {
 
-                break;
-            }
-        case 'd':
-            {
-                break;
-            }
-           
-        case 'i':
-        {
-
-            break;
-        }
-        case 'k':
-        {
-
-            break;
-        }                
-        case 'l':
-            {
-
-                break;
-            }
-        case 'j':
-            {
-
-                break;
-            }              
-
-        }
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp1.perx = sp1.curx;
+            sp1.pery = sp1.cury;
+            sp1.cury -= 1;
+            gotoxy(sp1.perx + 1 ,sp1.pery);
+            printf("\b ");       
+            gotoxy(sp1.curx + 1, sp1.cury);  
+            printf("\b");
+            gotoxy(sp1.curx, sp1.cury);  
+            printf(BLUE"\u25A3"RESET);
+            
+        //}
+    }
+    else if (move == 'a')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp1.perx = sp1.curx;
+            sp1.pery = sp1.cury;
+            sp1.curx -= 1;
+            gotoxy(sp1.perx + 1,sp1.pery);
+            printf("\b ");       
+            gotoxy(sp1.curx + 1, sp1.cury);  
+            printf("\b");
+            gotoxy(sp1.curx, sp1.cury);               
+            printf(BLUE"\u25A3"RESET);
+        //}
+    }
+    else if (move == 's')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp1.perx = sp1.curx;
+            sp1.pery = sp1.cury;
+            sp1.cury += 1;
+            gotoxy(sp1.perx + 1,sp1.pery);
+            printf("\b ");  
+            gotoxy(sp1.curx + 1, sp1.cury);  
+            printf("\b");     
+            gotoxy(sp1.curx, sp1.cury);               
+            printf(BLUE"\u25A3"RESET);
+        //}
+    }
+    else if (move == 'd')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp1.perx = sp1.curx;
+            sp1.pery = sp1.cury;
+            sp1.curx += 1;
+            gotoxy(sp1.perx + 1,sp1.pery);
+            printf("\b ");
+            gotoxy(sp1.curx + 1, sp1.cury);  
+            printf("\b");       
+            gotoxy(sp1.curx, sp1.cury);               
+            printf(BLUE"\u25A3"RESET);
+    }
+    else if (move == 'i')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp2.perx = sp2.curx;
+            sp2.pery = sp2.cury;
+            sp2.cury -= 1;
+            gotoxy(sp2.perx + 1 ,sp2.pery);
+            printf("\b ");   
+            gotoxy(sp2.curx + 1, sp2.cury);  
+            printf("\b");    
+            gotoxy(sp2.curx, sp2.cury);               
+            printf(RED"\u25A3"RESET);
+            
+        //}
+    }
+    else if (move == 'l')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp2.perx = sp2.curx;
+            sp2.pery = sp2.cury;
+            sp2.curx += 1;
+            gotoxy(sp2.perx + 1 ,sp2.pery);
+            printf("\b ");   
+            gotoxy(sp2.curx + 1, sp2.cury);  
+            printf("\b");    
+            gotoxy(sp2.curx, sp2.cury);               
+            printf(RED"\u25A3"RESET);
+        //}
+    }
+    else if (move == 'k')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp2.perx = sp2.curx;
+            sp2.pery = sp2.cury;
+            sp2.cury += 1;
+            gotoxy(sp2.perx + 1 ,sp2.pery);
+            printf("\b ");   
+            gotoxy(sp2.curx + 1, sp2.cury);  
+            printf("\b");    
+            gotoxy(sp2.curx, sp2.cury);               
+            printf(RED"\u25A3"RESET);
+        //}
+    }
+    else if (move == 'j')
+    {
+        //if(obj[sp1.curx][sp1.cury - 1].type == 'n')
+        //{      
+            sp2.perx = sp2.curx;
+            sp2.pery = sp2.cury;
+            sp2.curx -= 1;
+            gotoxy(sp2.perx + 1 ,sp2.pery);
+            printf("\b ");   
+            gotoxy(sp2.curx + 1, sp2.cury);  
+            printf("\b");    
+            gotoxy(sp2.curx, sp2.cury);               
+            printf(RED"\u25A3"RESET);
+        //}
+    }
+    
 }
 void print_map1()
 {    
@@ -474,10 +480,5 @@ void print_map1()
 
     makeItTeleporter(99,20);
     makeItTeleporter(11,20);
-
-
-
-
-
 }
 
